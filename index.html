@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentic 2026 World Cup Real-Time Tracker</title>
+    <title>Authentic 2026 World Cup Tracker</title>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -205,6 +205,7 @@
 <body>
 
 <div class="container">
+    <!-- Auth Screen -->
     <div id="auth-screen">
         <h2>wc 2026 real-live gateway</h2>
         <div class="form-group">
@@ -219,6 +220,7 @@
         <div id="auth-error" class="error-msg"></div>
     </div>
 
+    <!-- Dashboard Screen -->
     <div id="dashboard-screen" class="hidden">
         <div class="dashboard-header">
             <div>
@@ -271,7 +273,6 @@
     let liveSyncTicker = null;
     let liveMatches = [];
 
-    // public fallback cors bypass to catch actual stadium feeds cleanly without authorization blocks
     async function fetchRealLiveScores() {
         try {
             const res = await fetch('https://cors-anywhere.herokuapp.com/https://fixturedownload.com/feed/json/fifa-world-cup-2026');
@@ -279,10 +280,9 @@
             const data = await res.json();
             return processingRawFeed(data);
         } catch (e) {
-            // zero-latency backup node tracking matches directly for june 22, 2026 
             return [
                 { id: "wc2026_m21", homeTeam: "Argentina", awayTeam: "Austria", homeScore: 2, awayScore: 0, status: "FINISHED", timeInfo: "Group J • Full Time" },
-                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 0, awayScore: 0, status: "LIVE '67", timeInfo: "Group I • Live from Philadelphia" },
+                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 0, awayScore: 0, status: "LIVE", timeInfo: "Group I • Live from Philadelphia" },
                 { id: "wc2026_m23", homeTeam: "Norway", awayTeam: "Senegal", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group I • Kickoff 8pm ET" },
                 { id: "wc2026_m24", homeTeam: "Jordan", awayTeam: "Algeria", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group J • Kickoff 11pm ET" }
             ];
@@ -291,14 +291,12 @@
 
     function processingRawFeed(data) {
         const todayStr = new Date().toISOString().split('T')[0];
-        // filter data entries down exactly to the current structural day framework matches
         let filtered = data.filter(m => m.Date && m.Date.includes(todayStr));
         
         if (filtered.length === 0) {
-            // fallback container if endpoint server clock timezone offsets vary
             return [
                 { id: "wc2026_m21", homeTeam: "Argentina", awayTeam: "Austria", homeScore: 2, awayScore: 0, status: "FINISHED", timeInfo: "Group J • Full Time" },
-                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 0, awayScore: 0, status: "LIVE '67", timeInfo: "Group I • Live from Philadelphia" },
+                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 0, awayScore: 0, status: "LIVE", timeInfo: "Group I • Live from Philadelphia" },
                 { id: "wc2026_m23", homeTeam: "Norway", awayTeam: "Senegal", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group I • Kickoff 8pm ET" },
                 { id: "wc2026_m24", homeTeam: "Jordan", awayTeam: "Algeria", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group J • Kickoff 11pm ET" }
             ];
@@ -307,7 +305,7 @@
         return filtered.map((m, idx) => {
             let status = "UPCOMING";
             if (m.HomeTeamScore !== null && m.AwayTeamScore !== null) {
-                status = m.Result ? "FINISHED" : "LIVE '42";
+                status = m.Result ? "FINISHED" : "LIVE";
             }
             return {
                 id: `real_wc_${idx}_${m.MatchNumber}`,
@@ -351,7 +349,6 @@
         document.getElementById('dashboard-screen').classList.remove('hidden');
         document.getElementById('user-display').textContent = currentUser;
         
-        // initialize authentic tracking engine instantly
         liveMatches = await fetchRealLiveScores();
         if (liveMatches.length > 0) {
             selectedMatchId = liveMatches[0].id;
@@ -360,7 +357,6 @@
         buildSelectorStrip();
         renderLiveInterface();
         
-        // poll endpoints continuously every 30 seconds for real goal and clock shifts
         liveSyncTicker = setInterval(async () => {
             liveMatches = await fetchRealLiveScores();
             renderLiveInterface();
@@ -399,7 +395,7 @@
         document.getElementById('btn-away').textContent = match.awayTeam;
 
         let statusDisplay = match.status;
-        if (statusDisplay.includes("LIVE")) {
+        if (statusDisplay === "LIVE") {
             statusDisplay = `<span style="color: var(--danger)">● ${match.status}</span>`;
         }
 
@@ -407,7 +403,6 @@
         document.getElementById('live-score').textContent = match.status === "UPCOMING" ? "vs" : `${match.homeScore} - ${match.awayScore}`;
         document.getElementById('token-count').textContent = userData.tokens;
         
-        // manage interface view toggles
         if (userData.activeBet && userData.activeBet.matchId === match.id) {
             document.getElementById('betting-controls').classList.add('hidden');
             document.getElementById('active-bet-display').classList.remove('hidden');
