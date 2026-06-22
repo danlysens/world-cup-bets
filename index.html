@@ -267,22 +267,20 @@
 
     async function fetchLiveWorldCupData() {
         const errDiv = document.getElementById('dashboard-error');
+        let userData = JSON.parse(localStorage.getItem(`wc_live_user_${currentUser}`));
+        
         try {
-            // direct fetch from an open source cdn endpoint that has zero cors blocking issues
             const response = await fetch('https://raw.githubusercontent.com/openfootball/world-cup/master/2026--usa-canada-mexico/cup.json');
-            
             if (!response.ok) throw new Error("could not read database stream.");
 
             const data = await response.json();
-            
-            // map out all matches across different groups/stages natively
             let allMatches = [];
             if (data.rounds) {
                 data.rounds.forEach(round => {
                     if (round.matches) {
                         round.matches.forEach(m => {
                             allMatches.push({
-                                id: m.num || Math.random(),
+                                id: m.num || (m.team1 + m.team2 + m.date),
                                 homeTeam: m.team1,
                                 awayTeam: m.team2,
                                 dateStr: m.date,
@@ -294,14 +292,18 @@
                 });
             }
 
-            if (allMatches.length === 0) {
-                // fallback mock matching database properties if external repo data structure deviates
-                throw new Error("parsing structural conflict.");
+            // if there is an active bet, force the engine to keep that exact match loaded
+            if (userData.activeBet) {
+                let target = allMatches.find(m => m.id === userData.activeBet.matchId);
+                if (target) {
+                    currentMatch = target;
+                    renderMatchData();
+                    return;
+                }
             }
 
+            // otherwise, look for upcoming or active real matches
             const now = new Date();
-            
-            // calculate native browser date transformations to find closest match
             let sorted = allMatches.sort((a, b) => {
                 let dateA = new Date(`${a.dateStr}T${a.timeStr}`);
                 let dateB = new Date(`${b.dateStr}T${b.timeStr}`);
@@ -311,19 +313,26 @@
             currentMatch = sorted[0];
             renderMatchData();
         } catch (err) {
-            // instant seamless local operational failover to guarantee it never errors out blank
-            useLocalDataEngine();
+            useLocalDataEngine(userData);
         }
     }
 
-    function useLocalDataEngine() {
-        // live real world cup operational dataset mapped around right now (june 2026)
+    function useLocalDataEngine(userData) {
         const mockMatches = [
-            { id: 101, homeTeam: "Argentina", awayTeam: "Austria", dateStr: "2026-06-22", timeStr: "19:00", score: { home: 3, away: 1 }, status: "FINISHED" },
-            { id: 102, homeTeam: "France", awayTeam: "Iraq", dateStr: "2026-06-22", timeStr: "23:00", score: null, status: "UPCOMING" },
-            { id: 103, homeTeam: "Norway", awayTeam: "Senegal", dateStr: "2026-06-23", timeStr: "02:00", score: null, status: "UPCOMING" }
+            { id: 101, homeTeam: "Argentina", awayTeam: "Austria", dateStr: "2026-06-22", timeStr: "19:00", score: null },
+            { id: 102, homeTeam: "France", awayTeam: "Iraq", dateStr: "2026-06-22", timeStr: "23:00", score: null },
+            { id: 103, homeTeam: "Norway", awayTeam: "Senegal", dateStr: "2026-06-23", timeStr: "02:00", score: null }
         ];
         
+        if (userData.activeBet) {
+            let target = mockMatches.find(m => m.id === userData.activeBet.matchId);
+            if (target) {
+                currentMatch = target;
+                renderMatchData();
+                return;
+            }
+        }
+
         const now = new Date();
         let sorted = mockMatches.sort((a, b) => {
             let dateA = new Date(`${a.dateStr}T${a.timeStr}`);
@@ -359,9 +368,10 @@
             document.getElementById('live-score').textContent = "0 - 0";
         } else if (minutesDiff > 110) {
             document.getElementById('match-status').textContent = "FINISHED";
-            // simulated final score based on real logic parameters
-            currentMatch.score = { home: Math.floor(Math.random() * 3), away: Math.floor(Math.random() * 3) };
-            document.getElementById('live-score').textContent = `${currentMatch.score.home} - ${currentMatch.score.away}`;
+            if (!currentMatch.generatedScore) {
+                currentMatch.generatedScore = { home: Math.floor(Math.random() * 3), away: Math.floor(Math.random() * 3) };
+            }
+            document.getElementById('live-score').textContent = `${currentMatch.generatedScore.home} - ${currentMatch.generatedScore.away}`;
         } else {
             document.getElementById('match-status').textContent = "UPCOMING";
             document.getElementById('live-score').textContent = "vs";
@@ -378,7 +388,11 @@
             document.getElementById('betting-controls').classList.add('hidden');
             document.getElementById('active-bet-display').classList.remove('hidden');
             document.getElementById('locked-amount').textContent = userData.activeBet.amount;
-            document.getElementById('locked-choice').textContent = userData.activeBet.choice;
+            
+            let choiceLabel = userData.activeBet.choice;
+            if (choiceLabel === 'HOME') choiceLabel = currentMatch.homeTeam;
+            if (choiceLabel === 'AWAY') choiceLabel = currentMatch.awayTeam;
+            document.getElementById('locked-choice').textContent = choiceLabel;
         } else {
             document.getElementById('betting-controls').classList.remove('hidden');
             document.getElementById('active-bet-display').classList.add('hidden');
@@ -419,7 +433,6 @@
     });
 
     document.getElementById('check-results-btn').addEventListener('click', async () => {
-        await fetchLiveWorldCupData();
         const errDiv = document.getElementById('dashboard-error');
         let userData = JSON.parse(localStorage.getItem(`wc_live_user_${currentUser}`));
 
@@ -427,19 +440,25 @@
         let matchDateTime = new Date(`${currentMatch.dateStr}T${currentMatch.timeStr}`);
         const minutesDiff = (now - matchDateTime) / (1000 * 60);
 
+        // block checking if the match hasn't actually finished yet
         if (!currentMatch.score && minutesDiff <= 110) {
             errDiv.textContent = "match hasn't wrapped up yet. check back after final whistle.";
             return;
         }
 
-        if (!currentMatch.score) {
-            currentMatch.score = { home: Math.floor(Math.random() * 3), away: Math.floor(Math.random() * 3) };
+        let homeScore, awayScore;
+        if (currentMatch.score) {
+            homeScore = currentMatch.score.home;
+            awayScore = currentMatch.score.away;
+        } else {
+            if (!currentMatch.generatedScore) {
+                currentMatch.generatedScore = { home: Math.floor(Math.random() * 3), away: Math.floor(Math.random() * 3) };
+            }
+            homeScore = currentMatch.generatedScore.home;
+            awayScore = currentMatch.generatedScore.away;
         }
 
-        const homeScore = currentMatch.score.home;
-        const awayScore = currentMatch.score.away;
         let finalOutcome = 'DRAW';
-
         if (homeScore > awayScore) finalOutcome = 'HOME';
         if (awayScore > homeScore) finalOutcome = 'AWAY';
 
@@ -453,7 +472,9 @@
 
         userData.activeBet = null;
         localStorage.setItem(`wc_live_user_${currentUser}`, JSON.stringify(userData));
-        syncBettingUI();
+        
+        // now that the bet is wiped out, go find the next match
+        await fetchLiveWorldCupData();
     });
 </script>
 
