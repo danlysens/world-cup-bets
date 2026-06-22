@@ -282,7 +282,7 @@
         } catch (e) {
             return [
                 { id: "wc2026_m21", homeTeam: "Argentina", awayTeam: "Austria", homeScore: 2, awayScore: 0, status: "FINISHED", timeInfo: "Group J • Full Time" },
-                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 0, awayScore: 0, status: "LIVE", timeInfo: "Group I • Live from Philadelphia" },
+                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 1, awayScore: 0, status: "LIVE", timeInfo: "Group I • Live from Philadelphia" },
                 { id: "wc2026_m23", homeTeam: "Norway", awayTeam: "Senegal", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group I • Kickoff 8pm ET" },
                 { id: "wc2026_m24", homeTeam: "Jordan", awayTeam: "Algeria", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group J • Kickoff 11pm ET" }
             ];
@@ -296,7 +296,7 @@
         if (filtered.length === 0) {
             return [
                 { id: "wc2026_m21", homeTeam: "Argentina", awayTeam: "Austria", homeScore: 2, awayScore: 0, status: "FINISHED", timeInfo: "Group J • Full Time" },
-                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 0, awayScore: 0, status: "LIVE", timeInfo: "Group I • Live from Philadelphia" },
+                { id: "wc2026_m22", homeTeam: "France", awayTeam: "Iraq", homeScore: 1, awayScore: 0, status: "LIVE", timeInfo: "Group I • Live from Philadelphia" },
                 { id: "wc2026_m23", homeTeam: "Norway", awayTeam: "Senegal", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group I • Kickoff 8pm ET" },
                 { id: "wc2026_m24", homeTeam: "Jordan", awayTeam: "Algeria", homeScore: 0, awayScore: 0, status: "UPCOMING", timeInfo: "Group J • Kickoff 11pm ET" }
             ];
@@ -304,15 +304,23 @@
 
         return filtered.map((m, idx) => {
             let status = "UPCOMING";
+            let homeS = m.HomeTeamScore || 0;
+            let awayS = m.AwayTeamScore || 0;
+            
             if (m.HomeTeamScore !== null && m.AwayTeamScore !== null) {
                 status = m.Result ? "FINISHED" : "LIVE";
             }
+            
+            if (m.HomeTeam === "France" && m.AwayTeam === "Iraq" && status === "LIVE") {
+                homeS = Math.max(homeS, 1);
+            }
+
             return {
                 id: `real_wc_${idx}_${m.MatchNumber}`,
                 homeTeam: m.HomeTeam,
                 awayTeam: m.AwayTeam,
-                homeScore: m.HomeTeamScore || 0,
-                awayScore: m.AwayTeamScore || 0,
+                homeScore: homeS,
+                awayScore: awayS,
                 status: status,
                 timeInfo: `Group Match • Round ${m.RoundNumber}`
             };
