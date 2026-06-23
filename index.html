@@ -8,9 +8,9 @@
   body { font-family: monospace; background: #111; color: #fff; text-align: center; padding: 50px; }
   .hidden { display: none; }
   input, button { padding: 10px; margin: 5px; font-size: 16px; }
-  button { background: #ff0055; color: #fff; border: none; cursor: pointer; }
-  button:hover { background: #cc0044; }
-  .card { background: #222; padding: 20px; margin-top: 20px; border-radius: 8px; }
+  button { background: #00ff66; color: #000; border: none; font-weight: bold; cursor: pointer; }
+  button:hover { background: #00cc52; }
+  .card { background: #222; padding: 20px; margin-top: 20px; border-radius: 8px; border: 1px solid #333; }
 </style>
 </head>
 <body>
@@ -28,7 +28,7 @@
   <h3>tokens: <span id="tokens-display">100</span></h3>
   
   <div class="card" id="match-card">
-    <p>fetching live games...</p>
+    <p>fetching live world cup games...</p>
   </div>
 
   <div id="bet-box" class="hidden">
@@ -43,8 +43,8 @@
 </div>
 
 <script>
-  const API_KEY = '143cc95074024c19bb436d5a8257d5e7';
-  const API_URL = 'https://v3.football.api-sports.io/fixtures?league=1&season=2026&live=all';
+  // using thesportsdb free public development key '2'
+  const API_URL = 'https://www.thesportsdb.com/api/v1/json/2/latestedivision.php?id=4328'; 
   
   let tokens = 100;
   let match = null;
@@ -60,40 +60,34 @@
     document.getElementById('user-display').innerText = user;
     
     fetchMatch();
-    setInterval(fetchMatch, 60000);
+    setInterval(fetchMatch, 30000); 
   }
 
   async function fetchMatch() {
     try {
-      const res = await fetch(API_URL, {
-        headers: { 'x-apisports-key': API_KEY }
-      });
+      const res = await fetch(API_URL);
       const data = await res.json();
       
-      if (data.errors && Object.keys(data.errors).length > 0) {
-        document.getElementById('match-card').innerHTML = `<p>api error: ${JSON.stringify(data.errors)}</p>`;
+      if (!data.events || data.events.length === 0) {
+        document.getElementById('match-card').innerHTML = '<p>no live world cup games found right now.</p>';
         return;
       }
       
-      if (!data.response || data.response.length === 0) {
-        document.getElementById('match-card').innerHTML = '<p>no live world cup games right now.</p>';
-        return;
-      }
-      
-      match = data.response[0];
+      // grab the first available live or recent match
+      match = data.events[0];
       render();
       checkBet();
     } catch (e) {
-      document.getElementById('match-card').innerHTML = `<p>network error or api is down.</p>`;
+      document.getElementById('match-card').innerHTML = '<p>api error fetching data.</p>';
     }
   }
 
   function render() {
-    const h = match.teams.home.name;
-    const a = match.teams.away.name;
-    const gh = match.goals.home ?? 0;
-    const ga = match.goals.away ?? 0;
-    const status = match.fixture.status.short;
+    const h = match.strHomeTeam;
+    const a = match.strAwayTeam;
+    const gh = match.intHomeScore ?? 0;
+    const ga = match.intAwayScore ?? 0;
+    const status = match.strStatus; // returns 'Progress' or 'FT'
 
     document.getElementById('match-card').innerHTML = `
       <p>status: ${status}</p>
@@ -103,7 +97,7 @@
     document.getElementById('btn-home').innerText = h;
     document.getElementById('btn-away').innerText = a;
     
-    if (!bet && status !== 'FT') {
+    if (!bet && status === 'Progress') {
       document.getElementById('bet-box').classList.remove('hidden');
     }
   }
@@ -116,16 +110,16 @@
     tokens -= amt;
     document.getElementById('tokens-display').innerText = tokens;
     
-    bet = { pick, amt };
+    bet = { pick, amt, id: match.idEvent };
     document.getElementById('bet-box').classList.add('hidden');
-    document.getElementById('msg').innerText = `bet placed on ${pick} for ${amt} tokens. waiting for FT...`;
+    document.getElementById('msg').innerText = `bet placed on ${pick} for ${amt} tokens. waiting for match to finish...`;
   }
 
   function checkBet() {
-    if (!bet || match.fixture.status.short !== 'FT') return;
+    if (!bet || match.strStatus !== 'FT' || bet.id !== match.idEvent) return;
 
-    const gh = match.goals.home;
-    const ga = match.goals.away;
+    const gh = parseInt(match.intHomeScore);
+    const ga = parseInt(match.intAwayScore);
     
     let winner = 'draw';
     if (gh > ga) winner = 'home';
@@ -133,9 +127,9 @@
 
     if (bet.pick === winner) {
       tokens += bet.amt * 2;
-      document.getElementById('msg').innerText = `you won ${bet.amt * 2} tokens.`;
+      document.getElementById('msg').innerText = `match finished! you won ${bet.amt * 2} tokens.`;
     } else {
-      document.getElementById('msg').innerText = 'you lost the bet.';
+      document.getElementById('msg').innerText = `match finished! you lost your bet.`;
     }
 
     document.getElementById('tokens-display').innerText = tokens;
