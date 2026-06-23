@@ -70,6 +70,11 @@
       });
       const data = await res.json();
       
+      if (data.errors && Object.keys(data.errors).length > 0) {
+        document.getElementById('match-card').innerHTML = `<p>api error: ${JSON.stringify(data.errors)}</p>`;
+        return;
+      }
+      
       if (!data.response || data.response.length === 0) {
         document.getElementById('match-card').innerHTML = '<p>no live world cup games right now.</p>';
         return;
@@ -79,7 +84,7 @@
       render();
       checkBet();
     } catch (e) {
-      document.getElementById('match-card').innerHTML = '<p>api error. check your key.</p>';
+      document.getElementById('match-card').innerHTML = `<p>network error or api is down.</p>`;
     }
   }
 
