@@ -1,243 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Football Scores</title>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
-    <style>
-        :root {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #10b981;
-            --live-pulse: #ef4444;
-            --border: #334155;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background: var(--bg-card);
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .title-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .live-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: var(--live-pulse);
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.9); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.4; }
-            100% { transform: scale(0.9); opacity: 1; }
-        }
-
-        .status-text {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .match-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .match-card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            transition: transform 0.2s;
-        }
-
-        .match-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .league-header {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 6px;
-        }
-
-        .match-body {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            text-align: center;
-            gap: 12px;
-        }
-
-        .team {
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        .team.home { text-align: right; }
-        .team.away { text-align: left; }
-
-        .score-section {
-            background: var(--bg-main);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--accent);
-            border: 1px solid var(--border);
-        }
-
-        .loader {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
-        .error-msg {
-            color: var(--live-pulse);
-            text-align: center;
-            padding: 20px;
-            background: #27161a;
-            border: 1px solid var(--live-pulse);
-            border-radius: 8px;
-        }
-
-        .no-matches {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>world cup 2026 betting</title>
+<style>
+  body { font-family: monospace; background: #111; color: #fff; text-align: center; padding: 50px; }
+  .hidden { display: none; }
+  input, button { padding: 10px; margin: 5px; font-size: 16px; }
+  button { background: #ff0055; color: #fff; border: none; cursor: pointer; }
+  button:hover { background: #cc0044; }
+  .card { background: #222; padding: 20px; margin-top: 20px; border-radius: 8px; }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <div class="title-group">
-            <span class="live-indicator"></span>
-            <h2 style="font-size: 18px;">Live Football Feed</h2>
-        </div>
-        <span id="status" class="status-text">Connecting...</span>
-    </div>
+<div id="login-box">
+  <h2>login</h2>
+  <input type="text" id="username" placeholder="username">
+  <input type="password" id="password" placeholder="password">
+  <br>
+  <button onclick="login()">enter</button>
+</div>
 
-    <div id="feed-container">
-        <div class="loader">Loading fresh matches...</div>
-    </div>
+<div id="game-box" class="hidden">
+  <h2>user: <span id="user-display"></span></h2>
+  <h3>tokens: <span id="tokens-display">100</span></h3>
+  
+  <div class="card" id="match-card">
+    <p>fetching live games...</p>
+  </div>
+
+  <div id="bet-box" class="hidden">
+    <input type="number" id="bet-amount" placeholder="bet amount" min="1">
+    <br>
+    <button onclick="placeBet('home')" id="btn-home">home</button>
+    <button onclick="placeBet('draw')">draw</button>
+    <button onclick="placeBet('away')" id="btn-away">away</button>
+  </div>
+  
+  <p id="msg"></p>
 </div>
 
 <script>
-    const feedContainer = document.getElementById('feed-container');
-    const statusText = document.getElementById('status');
+  const API_KEY = '143cc95074024c19bb436d5a8257d5e7';
+  const API_URL = 'https://v3.football.api-sports.io/fixtures?league=1&season=2026&live=all';
+  
+  let tokens = 100;
+  let match = null;
+  let bet = null;
 
-    async function fetchScores() {
-        try {
-            statusText.textContent = 'Updating...';
-            // Utilizing ScoreBat's free video & match tracking data feed
-            const response = await fetch('https://www.scorebat.com/video-api/v3/feed/');
-            
-            if (!response.ok) throw new Error('Network payload failure');
-            
-            const data = await response.json();
-            statusText.textContent = `Live • Auto-refreshes`;
-            renderMatches(data.response || []);
-        } catch (error) {
-            console.error(error);
-            statusText.textContent = 'Offline';
-            if(feedContainer.querySelector('.loader')) {
-                feedContainer.innerHTML = `<div class="error-msg">Failed to stream live feed. Retrying connection...</div>`;
-            }
-        }
+  function login() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    if (!user || !pass) return alert('fill the damn fields');
+    
+    document.getElementById('login-box').classList.add('hidden');
+    document.getElementById('game-box').classList.remove('hidden');
+    document.getElementById('user-display').innerText = user;
+    
+    fetchMatch();
+    setInterval(fetchMatch, 60000);
+  }
+
+  async function fetchMatch() {
+    try {
+      const res = await fetch(API_URL, {
+        headers: { 'x-apisports-key': API_KEY }
+      });
+      const data = await res.json();
+      
+      if (!data.response || data.response.length === 0) {
+        document.getElementById('match-card').innerHTML = '<p>no live world cup games right now.</p>';
+        return;
+      }
+      
+      match = data.response[0];
+      render();
+      checkBet();
+    } catch (e) {
+      document.getElementById('match-card').innerHTML = '<p>api error. check your key.</p>';
+    }
+  }
+
+  function render() {
+    const h = match.teams.home.name;
+    const a = match.teams.away.name;
+    const gh = match.goals.home ?? 0;
+    const ga = match.goals.away ?? 0;
+    const status = match.fixture.status.short;
+
+    document.getElementById('match-card').innerHTML = `
+      <p>status: ${status}</p>
+      <h2>${h} ${gh} - ${ga} ${a}</h2>
+    `;
+
+    document.getElementById('btn-home').innerText = h;
+    document.getElementById('btn-away').innerText = a;
+    
+    if (!bet && status !== 'FT') {
+      document.getElementById('bet-box').classList.remove('hidden');
+    }
+  }
+
+  function placeBet(pick) {
+    const amt = parseInt(document.getElementById('bet-amount').value);
+    if (isNaN(amt) || amt <= 0) return alert('invalid amount');
+    if (amt > tokens) return alert('not enough tokens');
+
+    tokens -= amt;
+    document.getElementById('tokens-display').innerText = tokens;
+    
+    bet = { pick, amt };
+    document.getElementById('bet-box').classList.add('hidden');
+    document.getElementById('msg').innerText = `bet placed on ${pick} for ${amt} tokens. waiting for FT...`;
+  }
+
+  function checkBet() {
+    if (!bet || match.fixture.status.short !== 'FT') return;
+
+    const gh = match.goals.home;
+    const ga = match.goals.away;
+    
+    let winner = 'draw';
+    if (gh > ga) winner = 'home';
+    if (ga > gh) winner = 'away';
+
+    if (bet.pick === winner) {
+      tokens += bet.amt * 2;
+      document.getElementById('msg').innerText = `you won ${bet.amt * 2} tokens.`;
+    } else {
+      document.getElementById('msg').innerText = 'you lost the bet.';
     }
 
-    function renderMatches(matches) {
-        if (!matches || matches.length === 0) {
-            feedContainer.innerHTML = `<div class="no-matches">No active live matches or streams found right now.</div>`;
-            return;
-        }
-
-        // Limit display down to top 15 matches to maintain fast DOM paint times
-        const freshHTML = matches.slice(0, 15).map(match => {
-            // Fallback score parsing if properties vary inside payload split strings
-            let scoreHTML = 'VS';
-            if (match.title && match.title.includes(' - ')) {
-                const parts = match.title.split(' - ');
-                const matchScore = parts[1]?.match(/\d+-\d+/);
-                if (matchScore) {
-                    scoreHTML = matchScore[0];
-                }
-            }
-
-            return `
-                <div class="match-card">
-                    <div class="league-header">${escapeHTML(match.competition || 'International Match')}</div>
-                    <div class="match-body">
-                        <div class="team home">${escapeHTML(match.side1?.name || 'Home Team')}</div>
-                        <div class="score-section">${scoreHTML}</div>
-                        <div class="team away">${escapeHTML(match.side2?.name || 'Away Team')}</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        feedContainer.innerHTML = `<div class="match-list">${freshHTML}</div>`;
-    }
-
-    function escapeHTML(str) {
-        return str.replace(/[&<>'"]/g, 
-            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-        );
-    }
-
-    // run immediately on load
-    fetchScores();
-
-    // poll feed exactly every 30 seconds to avoid absolute rate limits while keeping things current
-    setInterval(fetchScores, 30000);
+    document.getElementById('tokens-display').innerText = tokens;
+    bet = null;
+  }
 </script>
-
 </body>
 </html>
